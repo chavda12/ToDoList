@@ -32,7 +32,7 @@ class TodoListCubit extends Cubit<TodoListState> {
 
       // * update doc in firebase with ID
       final docID = todo.id;
-      await FirebaseServices().updateData(docID, todo.toMap());
+      await FirebaseServices.instance.updateData(docID, todo.toMap());
       // collection("").doc(docID).update(todo.toMap())
     } catch (e) {}
   }

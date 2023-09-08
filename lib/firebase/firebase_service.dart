@@ -7,9 +7,10 @@ import 'package:todolist/models/todo_model.dart';
 import 'package:todolist/utils/globals.dart';
 
 class FirebaseServices {
-  // FirebaseServices._();
-  final _firestore = FirebaseFirestore.instance;
-  FirebaseFirestore get firestore => _firestore ;
+  FirebaseServices._();
+  final firestore = FirebaseFirestore.instance;
+  static final FirebaseServices _firebaseServices = FirebaseServices._();
+  static FirebaseServices get instance => _firebaseServices;
   static final collectionName = 'TodoData';
 
   Future<void> addTodoData(String fieldName) async {

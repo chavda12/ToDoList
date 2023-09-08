@@ -14,7 +14,7 @@ class TodoList extends StatefulWidget {
 class _TodoListState extends State<TodoList> {
   final TextEditingController _controller = TextEditingController();
   final TextEditingController searchController = TextEditingController();
-  final FirebaseServices firebaseServices = FirebaseServices();
+  final FirebaseServices firebaseServices = FirebaseServices.instance;
 
   @override
   void initState() {
