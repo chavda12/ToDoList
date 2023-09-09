@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:todolist/bloc/blocEvent.dart';
 import 'package:todolist/cubit/todolist_cubit.dart';
 import 'package:todolist/cubit/todolist_state.dart';
 import 'package:todolist/firebase/firebase_service.dart';
 import 'package:todolist/models/todo_model.dart';
+import 'package:todolist/utils/globals.dart';
+import 'package:uuid/uuid.dart';
 
 class TodoList extends StatefulWidget {
   @override
@@ -101,13 +104,21 @@ class _TodoListState extends State<TodoList> {
                       SizedBox(
                         height: 5,
                       ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: searchController.text.length > 0
-                            ? state.searchData.length
-                            : state.todoListData.length,
-                        itemBuilder: (context, index) => todoListdata(index,
-                            searchText: searchController.text.length > 0),
+                      WatchBoxBuilder(
+                        box: todoBox!,
+                        builder: (context, box) {
+                          Map<dynamic, dynamic> raw = box.toMap();
+                          List list = raw.values.toList();
+                          print(list);
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: searchController.text.length > 0
+                                ? state.searchData.length
+                                : state.todoListData.length,
+                            itemBuilder: (context, index) => todoListdata(index,
+                                searchText: searchController.text.length > 0),
+                          );
+                        },
                       )
                     ],
                   ),
@@ -156,10 +167,19 @@ class _TodoListState extends State<TodoList> {
                   GestureDetector(
                     onTap: () async {
                       if (_controller.text.length > 0) {
-                        await firebaseServices.addTodoData(_controller.text);
+                        TodoModel todoModel = TodoModel(
+                          title: _controller.text,
+                          checkedvalue: state.checkedValue ?? false,
+                          id: id,
+                        );
+                        await todoBox!.add(todoModel);
                         _controller.text = '';
-                        await firebaseServices.getTodoListData(context);
                       }
+                      // if (_controller.text.length > 0) {
+                      //   await firebaseServices.addTodoData(_controller.text);
+                      //   _controller.text = '';
+                      //   await firebaseServices.getTodoListData(context);
+                      // }
                     },
                     child: Container(
                       height: 45,
@@ -187,59 +207,64 @@ class _TodoListState extends State<TodoList> {
     return BlocBuilder<TodoListCubit, TodoListState>(builder: (context, state) {
       final allList = searchText ? state.searchData : state.todoListData;
       final todo = allList[index];
-      return allList.length>0? 
-      Column(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), color: Colors.white),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+      return allList.length > 0
+          ? Column(children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.white),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Checkbox(
-                      value: todo.checkedvalue,
-                      onChanged: (val) {
-                        todoListCubit.updateCheckedValue(index, val ?? false);
-                        //  BlocEvent.updateCheckedValue(index,val);
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: todo.checkedvalue,
+                          onChanged: (val) {
+                            todoListCubit.updateCheckedValue(
+                                index, val ?? false);
+                            //  BlocEvent.updateCheckedValue(index,val);
+                          },
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Text(todo.title ?? ''),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        await firebaseServices.removedataFromList(
+                            context, todo.id);
                       },
-                    ),
-                    SizedBox(
-                      width: 5,
-                    ),
-                    Text(todo.title),
+                      child: Container(
+                        height: 30,
+                        margin:
+                            EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.red,
+                        ),
+                        width: 30,
+                        child: Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
                   ],
                 ),
-                GestureDetector(
-                  onTap: () async {
-                    await firebaseServices.removedataFromList(context, todo.id);
-                  },
-                  child: Container(
-                    height: 30,
-                    margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: Colors.red,
-                    ),
-                    width: 30,
-                    child: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 7,
-          ),
-        ]
-  
-      ):Center(child: Text('No Data Found',style: TextStyle(color: Colors.black),));
-   
+              ),
+              SizedBox(
+                height: 7,
+              ),
+            ])
+          : Center(
+              child: Text(
+              'No Data Found',
+              style: TextStyle(color: Colors.black),
+            ));
     });
   }
 }
