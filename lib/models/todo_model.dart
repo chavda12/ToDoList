@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:hive_flutter/adapters.dart';
-
+part 'todo_model.g.dart';
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 @HiveType(typeId: 1)
 class TodoModel {
